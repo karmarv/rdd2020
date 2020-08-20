@@ -11,17 +11,9 @@
 
 
 # install dependencies: 
-get_ipython().system('pip install pyyaml==5.1 pycocotools>=2.0.1')
 import torch, torchvision
 print(torch.__version__, torch.cuda.is_available())
-get_ipython().system('gcc --version')
 # opencv is pre-installed on colab
-
-
-# In[2]:
-
-
-get_ipython().system(' nvidia-smi')
 
 
 # In[3]:
@@ -32,11 +24,10 @@ get_ipython().system(' nvidia-smi')
 #DETECTRON2_DATASETS = "/content/gdrive/My Drive/Projects/Windspect/code/data"
 #ROADDAMAGE_DATASET  = DETECTRON2_DATASETS+"/rdd2020"
 
-DETECTRON2_DATASETS = "/media/rahul/Karmic/data"
+#DETECTRON2_DATASETS = "/media/rahul/Karmic/data"
+DETECTRON2_DATASETS = "/home/jovyan/ws-data/data"
 ROADDAMAGE_DATASET  = DETECTRON2_DATASETS+"/rdd2020"
 DATASET_BASE_PATH = ROADDAMAGE_DATASET
-
-get_ipython().system(' du -h "$ROADDAMAGE_DATASET/test1"')
 
 
 # In[4]:
@@ -136,7 +127,6 @@ for dataset_name, splits_per_dataset in _PREDEFINED_SPLITS_GRC_MD["rdd2020_sourc
 # install detectron2: (colab has CUDA 10.1 + torch 1.6)
 # See https://detectron2.readthedocs.io/tutorials/install.html for instructions
 assert torch.__version__.startswith("1.6")
-get_ipython().system('pip install detectron2 -f https://dl.fbaipublicfiles.com/detectron2/wheels/cu101/torch1.6/index.html')
 
 
 # In[8]:
@@ -179,8 +169,6 @@ def cv2_imshow(im):
 #!wget http://images.cocodataset.org/val2017/000000439715.jpg -q -O input.jpg
 show_image_path = ROADDAMAGE_DATASET+"/train/Japan/images/Japan_000000.jpg"
 print(show_image_path)
-im = cv2.imread(show_image_path)
-cv2_imshow(im)
 
 
 # Then, we create a detectron2 config and a detectron2 `DefaultPredictor` to run inference on this image.
@@ -346,7 +334,7 @@ def visualise_dataset(data: str = "val"):
         out = visualizer.draw_dataset_dict(d)
         cv2_imshow(out.get_image()[:, :, ::-1])
 
-visualise_dataset()
+#visualise_dataset()
 
 
 # ## Train!
@@ -464,9 +452,6 @@ for idx, d in enumerate(random.sample(dataset_dicts, 3)):
                    scale=0.5
     )
 
-    out = v.draw_instance_predictions(outputs["instances"].to("cpu"))
-    cv2_imshow(out.get_image()[:, :, ::-1])
-
 
 # We can also evaluate its performance using AP metric implemented in COCO API.
 # This gives an AP of ~70. Not bad!
@@ -575,7 +560,7 @@ tqdm._instances.clear()
 
 
 def write_results_to_file():
-    with open(os.path.join("./output/run_rdd/", 'hal_submission_rdd2020_e10k_class10_19Aug.txt'), 'w') as f:
+    with open(os.path.join("./output/run_rdd/", 'hal_submission_rdd2020_e27k_class10_19Aug.txt'), 'w') as f:
       f.writelines("%s\n" % line for line in results)
 write_results_to_file()
 
