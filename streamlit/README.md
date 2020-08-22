@@ -12,6 +12,8 @@ pip install --upgrade streamlit opencv-python
 streamlit run app.py
 ```
 
+![Detection Visualizer](streamlit/RDD_DetectionVisualizer.png "Screenshot")
+
 ### Questions? Comments?
 
 Please ask in the [Streamlit community](https://discuss.streamlit.io).

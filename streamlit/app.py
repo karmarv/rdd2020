@@ -103,10 +103,10 @@ def run_the_app():
     # A.) Get the boxes for the objects detected by YOLO by running the YOLO model.
     boxes = model.predict_rdd(image, confidence_threshold)
     draw_image_with_boxes(image, boxes, "Real-time Road Damage Detection",
-        "**Faster RCNN Resnet 50 Model** (overlap `%3.1f`) (confidence `%3.1f`)" % (overlap_threshold, confidence_threshold))
+        "**Faster RCNN Resnet 50 Model** (overlap `%3.1f`) (confidence `%3.1f`) -`%s`" % (overlap_threshold, confidence_threshold, selected_frame[0]))
 
     # B.) Uncomment these lines to peek at these DataFrames.
-    st.write('## Metadata', metadata[:10], '## Summary', summary[:10])
+    st.write('## Summary', summary[:10], '## Metadata', metadata[:10])
 
     # C.) Add boxes for objects on the image. These are the boxes for the ground image.
     boxes = metadata[metadata.frame == selected_frame[0]].drop(columns=["frame", "full_file"])
