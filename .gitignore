@@ -129,6 +129,7 @@ dmypy.json
 .pyre/
 
 
+*.pth
 /coco_eval/**
 /output/**
 
