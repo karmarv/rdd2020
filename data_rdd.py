@@ -7,8 +7,8 @@ from detectron2.structures import BoxMode
 from xml.etree import ElementTree
 from xml.dom import minidom
 
-#DETECTRON2_DATASETS = "/media/rahul/Karmic/data"
-DETECTRON2_DATASETS = "/home/jovyan/ws-data/data"
+DETECTRON2_DATASETS = "/media/rahul/Karmic/data"
+#DETECTRON2_DATASETS = "/home/jovyan/ws-data/data"
 ROADDAMAGE_DATASET  = DETECTRON2_DATASETS+"/rdd2020"
 DATASET_BASE_PATH = ROADDAMAGE_DATASET
 
@@ -125,7 +125,7 @@ def get_rdd_coco_instances_meta():
     thing_ids = [k["id"] for k in RDD_DAMAGE_CATEGORIES]
     thing_names = [k["name"] for k in RDD_DAMAGE_CATEGORIES]
     thing_colors = [k["color"] for k in RDD_DAMAGE_CATEGORIES]
-    assert len(thing_ids) == 10, len(thing_ids)
+    assert len(thing_ids) == 4, len(thing_ids)
     # Mapping from the incontiguous COCO category id to an id in [0, 79]
     thing_dataset_id_to_contiguous_id = {k: i for i, k in enumerate(thing_ids)}
     thing_classes = [k["name"] for k in RDD_DAMAGE_CATEGORIES]
@@ -191,7 +191,12 @@ def load_images_ann_dicts(basepath, splits_per_dataset):
             dataset_dicts.append(record)
     return dataset_dicts
 
-
+"""
+Prepare data split (80:15:5) /media/rahul/Karmic/data/rdd2020  { rdd2020_train }  	 ('train/Czech', 'train/India', 'train/Japan')
+    0 	Loading Total: 2829 , Train Images: 2263 . Read images from path =  /media/rahul/Karmic/data/rdd2020/train/Czech/images
+    1 	Loading Total: 7706 , Train Images: 6164 . Read images from path =  /media/rahul/Karmic/data/rdd2020/train/India/images
+    2 	Loading Total: 10506 , Train Images: 8404 . Read images from path =  /media/rahul/Karmic/data/rdd2020/train/Japan/images
+"""
 if __name__ == "__main__":
     print("\n-----------", DATASET_BASE_PATH, "-----------\n")
     prepare_target_directories(DATASET_BASE_PATH, "rdd2020_source", _PREDEFINED_SPLITS_GRC_MD["rdd2020_source"]["rdd2020_train"])
