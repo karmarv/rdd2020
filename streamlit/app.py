@@ -22,7 +22,8 @@ import pandas as pd
 import numpy as np
 import os, urllib, cv2
 
-from model import model 
+from model import model_bbox 
+from model import model_segm
 
 # Streamlit encourages well-structured code, like starting execution in a main() function.
 def main():
@@ -56,10 +57,10 @@ def run_the_app():
             1478019952686311006.jpg,  468,  128,  487,  199, pedestrian
             1478019953180167674.jpg,  233,  157,  248,  169, car
         """
-        for dataset_name, splits_per_dataset in model._PREDEFINED_SPLITS_GRC_MD["rdd2020"].items():
+        for dataset_name, splits_per_dataset in model_bbox._PREDEFINED_SPLITS_GRC_MD["rdd2020"].items():
             d = dataset_name.split("_")[1]
             print("[",d,"]\t",dataset_name, "\t", splits_per_dataset)
-            annotations = model.load_images_ann_dicts(model.ROADDAMAGE_DATASET, splits_per_dataset)
+            annotations = model_bbox.load_images_ann_dicts(model_bbox.ROADDAMAGE_DATASET, splits_per_dataset)
         return annotations
 
     # This function uses some Pandas magic to summarize the metadata Dataframe.
@@ -101,7 +102,7 @@ def run_the_app():
     
 
     # A.) Get the boxes for the objects detected by YOLO by running the YOLO model.
-    boxes = model.predict_rdd(image, confidence_threshold)
+    boxes = model_bbox.predict_rdd(image, confidence_threshold)
     draw_image_with_boxes(image, boxes, "Real-time Road Damage Detection",
         "**Faster RCNN Resnet 50 Model** (overlap `%3.1f`) (confidence `%3.1f`) -`%s`" % (overlap_threshold, confidence_threshold, selected_frame[0]))
 
@@ -160,7 +161,7 @@ def object_detector_ui():
 # Draws an image with boxes overlayed to indicate the presence of cars, pedestrians etc.
 def draw_image_with_boxes(image, boxes, header, description):
     # Superpose the semi-transparent object detection boxes.    # Colors for the boxes
-    LABEL_COLORS = model.RDD_DAMAGE_LABEL_COLORS
+    LABEL_COLORS = model_bbox.RDD_DAMAGE_LABEL_COLORS
     image_with_boxes = image.astype(np.float64)
     if 'scores' in boxes.columns:
         for _, (xmin, ymin, xmax, ymax, label, score) in boxes.iterrows():
