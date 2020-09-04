@@ -115,7 +115,7 @@ class RDDTrainer(DefaultTrainer):
         """        
         # TODO : Augmentation is not working
         mapr = cls.build_mapper(cfg, is_train=True) 
-        return build_detection_train_loader(cfg, mapper=mapr)
+        return build_detection_train_loader(cfg, mapper=None)
 
     @classmethod
     def build_test_loader(cls, cfg, dataset_name):
@@ -124,7 +124,7 @@ class RDDTrainer(DefaultTrainer):
         Overwrite it if you'd like a different data loader.
         """
         mapr = cls.build_mapper(cfg, is_train=False)
-        return build_detection_test_loader(cfg, dataset_name, mapper=mapr)
+        return build_detection_test_loader(cfg, dataset_name, mapper=None)
 
 # Configuration
 cfg = get_cfg()
@@ -132,7 +132,7 @@ cfg.merge_from_file(model_zoo.get_config_file("COCO-Detection/faster_rcnn_R_50_F
 cfg.MODEL.WEIGHTS         = model_zoo.get_checkpoint_url("COCO-Detection/faster_rcnn_R_50_FPN_3x.yaml")  # Let training initialize from model zoo
 cfg.DATASETS.TRAIN        = ("rdd2020_train",)
 cfg.DATASETS.TEST         = ("rdd2020_val", )
-cfg.OUTPUT_DIR            = "./output/run_exp3/"
+cfg.OUTPUT_DIR            = "./output/run_exp1_b256/"
 cfg.MODEL.DEVICE          = "cuda"
 cfg.DATALOADER.NUM_WORKERS= 8
 cfg.SOLVER.IMS_PER_BATCH  = 8
@@ -143,7 +143,7 @@ cfg.SOLVER.STEPS          = (23000, 26000)
 cfg.SOLVER.GAMMA          = 0.05
 cfg.TEST.EVAL_PERIOD      = 1000
 
-cfg.MODEL.ROI_HEADS.BATCH_SIZE_PER_IMAGE  = 64   # faster, and good enough for this toy dataset (default: 512)
+cfg.MODEL.ROI_HEADS.BATCH_SIZE_PER_IMAGE  = 256   # faster, and good enough for this toy dataset (default: 512)
 cfg.MODEL.ROI_HEADS.NUM_CLASSES           = len(data_rdd.RDD_DAMAGE_CATEGORIES)  # only has one class (ballon)
 cfg.SOLVER.CHECKPOINT_PERIOD              = 1000
 os.makedirs(cfg.OUTPUT_DIR, exist_ok=True)
@@ -154,13 +154,14 @@ setup_logger(output=cfg.OUTPUT_DIR)
 # Variables for processing 
 rdd2020_metadata = MetadataCatalog.get("rdd2020_val")
 print("\nRDD2020 Metadata: ", rdd2020_metadata,"\n")
-JUST_EVALUATE = False     # False means Train
+trainer = RDDTrainer(cfg)
 
+#JUST_EVALUATE = False     # False means Train
+JUST_EVALUATE = False
 
 # Decision to Train or just evaluate
 if not JUST_EVALUATE:
     # Train
-    trainer = RDDTrainer(cfg) 
     trainer.resume_or_load(resume=False)
     trainer.train()
 
@@ -175,7 +176,7 @@ else:
     cfg.MODEL.ROI_HEADS.SCORE_THRESH_TEST = 0.7   # set a custom testing threshold for this model
     cfg.DATASETS.TEST = ("rdd2020_val",)
     predictor = DefaultPredictor(cfg)
-
+    trainer.resume_or_load(resume=True)
 
     # Then, we randomly select several samples to visualize the prediction results.
     from detectron2.utils.visualizer import ColorMode
