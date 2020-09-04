@@ -15,6 +15,7 @@ import numpy as np
 import os, json, cv2, random
 import matplotlib.pyplot as plt
 from copy import deepcopy
+from tqdm import tqdm
 
 # import some common detectron2 utilities
 from detectron2 import model_zoo
@@ -27,11 +28,9 @@ from detectron2.evaluation import COCOEvaluator, DatasetEvaluators
 import data_rdd
 
 
-
-
 cfg = get_cfg()
 cfg.merge_from_file(model_zoo.get_config_file("COCO-Detection/faster_rcnn_R_50_FPN_3x.yaml"))
-cfg.OUTPUT_DIR            = "./output/run_rdd/"
+cfg.OUTPUT_DIR            = "./output/run_exp1/"
 cfg.MODEL.DEVICE          = "cuda"
 cfg.MODEL.ROI_HEADS.BATCH_SIZE_PER_IMAGE  = 64   # faster, and good enough for this toy dataset (default: 512)
 cfg.MODEL.ROI_HEADS.NUM_CLASSES           = len(data_rdd.RDD_DAMAGE_CATEGORIES)  # only has one class (ballon)
@@ -40,20 +39,10 @@ cfg.MODEL.ROI_HEADS.NUM_CLASSES           = len(data_rdd.RDD_DAMAGE_CATEGORIES) 
 # Now, let's run inference with the trained model on the balloon validation dataset. First, let's create a predictor using the model we just trained:
 cfg.MODEL.WEIGHTS = os.path.join(cfg.OUTPUT_DIR, "model_final.pth")
 cfg.MODEL.ROI_HEADS.SCORE_THRESH_TEST = 0.7   # set a custom testing threshold for this model
-cfg.DATASETS.TEST = ("rdd2020_val",)
+
 predictor = DefaultPredictor(cfg)
 
-
-# Then, we randomly select several samples to visualize the prediction results.
-from detectron2.utils.visualizer import ColorMode
-from detectron2.evaluation import COCOEvaluator, DatasetEvaluators, inference_on_dataset
-from detectron2.data import build_detection_test_loader
-
-evaluator = COCOEvaluator("rdd2020_val", cfg, False, "coco_eval")
-val_loader = build_detection_test_loader(cfg, "rdd2020_val")
-
-
-# # Generate RDD2020 Submission dataset
+# Generate RDD2020 Submission dataset
 splits_per_submission_dataset = ( "test1/India", "test1/Japan", "test1/Czech")
 #splits_per_submission_dataset = ( "test/India", "test/Japan", "test/Czech")
 dataset_test_submission_dicts = data_rdd.load_images_ann_dicts(data_rdd.ROADDAMAGE_DATASET, splits_per_submission_dataset)
@@ -97,21 +86,17 @@ def format_submission_result(image_meta, predictions):
     formatted_result = ["{}".format(image_meta["image_name"])]
     if classes is not None:
         score_dict = {}
-        for i, (cls, scr, bbx) in enumerate(zip(classes, scores, boxes)):
+        for i, (clss, scr, bbx) in enumerate(zip(classes, scores, boxes)):
             (x_min, y_min, x_max, y_max) = bbx
-            # Skipping results which are more than 5 
-            if (int(cls) < 6) and i < 5:
-                # class_submission_id, x_min, y_min, x_max, y_max
-                out_str = "{0} {1} {2} {3} {4} ".format(map_classes_superids[int(cls)], int(x_min), int(y_min), int(x_max), int(y_max))
-                score_dict[scr] = out_str
+            # class_submission_id, x_min, y_min, x_max, y_max
+            out_str = "{0} {1} {2} {3} {4} ".format(map_classes_superids[int(clss)], int(x_min), int(y_min), int(x_max), int(y_max))
+            score_dict[scr] = out_str
         result_item = ""
         for key in sorted(score_dict.keys()):
             result_item += score_dict[key]
         formatted_result.append(result_item)
     return formatted_result
 
-
-from tqdm import tqdm
 
 def generate_results():
     results = []
@@ -123,13 +108,14 @@ def generate_results():
             results.append("{},{}".format(formatted_result[0], formatted_result[1]))
     return results
 
+def write_results_to_file():
+    with open(os.path.join(cfg.OUTPUT_DIR, 'hal_submission_rdd2020_exp.txt'), 'w') as f:
+      f.writelines("%s\n" % line for line in results)
+
+
+print("------------------- Test -------------------")
 results = generate_results()
 tqdm._instances.clear()
-
-
-
-def write_results_to_file():
-    with open(os.path.join("./output/run_rdd/", 'hal_submission_rdd2020_e27k_class10_19Aug.txt'), 'w') as f:
-      f.writelines("%s\n" % line for line in results)
+print("------------------- Write -------------------")
 write_results_to_file()
 
