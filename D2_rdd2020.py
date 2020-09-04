@@ -17,7 +17,6 @@ assert torch.__version__.startswith("1.6")
 # Setup detectron2 logger
 import detectron2
 from detectron2.utils.logger import setup_logger
-setup_logger()
 
 # import some common libraries
 import numpy as np
@@ -31,6 +30,18 @@ from detectron2.engine import DefaultPredictor
 from detectron2.config import get_cfg
 from detectron2.utils.visualizer import Visualizer
 from detectron2.data import MetadataCatalog, DatasetCatalog
+
+## Train detectron2
+from detectron2.engine import DefaultTrainer
+from detectron2.evaluation import COCOEvaluator, DatasetEvaluators
+from detectron2.data.dataset_mapper import DatasetMapper
+from detectron2.data import transforms as T
+from detectron2.modeling import build_model
+from detectron2.data import detection_utils
+from detectron2.data.build import (
+    build_detection_test_loader,
+    build_detection_train_loader,
+)
 
 import data_rdd
 
@@ -48,22 +59,6 @@ for dataset_name, splits_per_dataset in data_rdd._PREDEFINED_SPLITS_GRC_MD["rdd2
     meta = data_rdd.get_rdd_coco_instances_meta()
     MetadataCatalog.get(inst_key).set(evaluator_type="coco", basepath=data_rdd.ROADDAMAGE_DATASET, splits_per_dataset=deepcopy(splits_per_dataset), **meta) 
 
-rdd2020_metadata = MetadataCatalog.get("rdd2020_val")
-
-# ## Train!
-# 
-# Now, let's fine-tune a COCO-pretrained R50-FPN Mask R-CNN model on the RDD dataset.
-# 
-from detectron2.engine import DefaultTrainer
-from detectron2.evaluation import COCOEvaluator, DatasetEvaluators
-from detectron2.data.dataset_mapper import DatasetMapper
-from detectron2.data import transforms as T
-from detectron2.modeling import build_model
-from detectron2.data.build import (
-    build_detection_test_loader,
-    build_detection_train_loader,
-)
-
 class MyColorAugmentation(T.Augmentation):
     def get_transform(self, image):
         r = np.random.rand(2)
@@ -74,6 +69,8 @@ class MyCustomResize(T.Augmentation):
         old_h, old_w = image.shape[:2]
         new_h, new_w = int(old_h * np.random.rand()), int(old_w * 1.5)
         return T.ResizeTransform(old_h, old_w, new_h, new_w)
+
+
 
 # Trainer Class
 class RDDTrainer(DefaultTrainer):
@@ -97,15 +94,17 @@ class RDDTrainer(DefaultTrainer):
 
     @classmethod
     def build_mapper(cls, cfg, is_train=True):
+        augs = detection_utils.build_augmentation(cfg, is_train)
+        #if cfg.INPUT.CROP.ENABLED and is_train:
+        #    augs.insert(0, T.RandomCrop(cfg.INPUT.CROP.TYPE, cfg.INPUT.CROP.SIZE))
+
         # Define a sequence of augmentations: TODO
-        augs = [
-            T.RandomBrightness(0.9, 1.1),
-            T.RandomFlip(prob=0.5),
-            MyColorAugmentation(),
-            T.RandomRotation([5,10,15,20,25,30], expand=True, center=None)
-            #T.RandomCrop("absolute", (640, 640)),
-            #MyCustomResize()
-        ]   # type: T.Augmentation
+        augs.append(T.RandomBrightness(0.9, 1.1))
+        augs.append(MyColorAugmentation())
+        # augs.append(T.RandomRotation([5,10,15,20,25,30], expand=True, center=None))
+        # T.RandomCrop("absolute", (640, 640)),
+        # MyCustomResize()
+        # type: T.Augmentation
         return DatasetMapper(cfg, is_train=is_train, augmentations=augs)
 
     @classmethod
@@ -115,8 +114,8 @@ class RDDTrainer(DefaultTrainer):
         Overwrite it if you'd like a different data loader.
         """        
         # TODO : Augmentation is not working
-        # mapr = cls.build_mapper(cfg, is_train=True) 
-        return build_detection_train_loader(cfg, mapper=None)
+        mapr = cls.build_mapper(cfg, is_train=True) 
+        return build_detection_train_loader(cfg, mapper=mapr)
 
     @classmethod
     def build_test_loader(cls, cfg, dataset_name):
@@ -124,8 +123,8 @@ class RDDTrainer(DefaultTrainer):
         It now calls :func:`detectron2.data.build_detection_test_loader`.
         Overwrite it if you'd like a different data loader.
         """
-        mapr = cls.build_mapper(cfg, is_train=True)
-        return build_detection_test_loader(cfg, dataset_name)
+        mapr = cls.build_mapper(cfg, is_train=False)
+        return build_detection_test_loader(cfg, dataset_name, mapper=mapr)
 
 # Configuration
 cfg = get_cfg()
@@ -133,50 +132,61 @@ cfg.merge_from_file(model_zoo.get_config_file("COCO-Detection/faster_rcnn_R_50_F
 cfg.MODEL.WEIGHTS         = model_zoo.get_checkpoint_url("COCO-Detection/faster_rcnn_R_50_FPN_3x.yaml")  # Let training initialize from model zoo
 cfg.DATASETS.TRAIN        = ("rdd2020_train",)
 cfg.DATASETS.TEST         = ("rdd2020_val", )
-cfg.OUTPUT_DIR            = "./output/run_exp1/"
+cfg.OUTPUT_DIR            = "./output/run_exp3/"
 cfg.MODEL.DEVICE          = "cuda"
 cfg.DATALOADER.NUM_WORKERS= 8
 cfg.SOLVER.IMS_PER_BATCH  = 8
-cfg.SOLVER.BASE_LR        = 0.005      # Pick a good LR
+cfg.SOLVER.BASE_LR        = 0.01        # Pick a good LR
 cfg.SOLVER.WARMUP_ITERS   = 1000 
-cfg.SOLVER.MAX_ITER       = 15000       # You may need to train longer for a practical dataset
-cfg.SOLVER.STEPS          = (12000, 14000)
+cfg.SOLVER.MAX_ITER       = 27000       # You may need to train longer for a practical dataset
+cfg.SOLVER.STEPS          = (23000, 26000)
 cfg.SOLVER.GAMMA          = 0.05
 cfg.TEST.EVAL_PERIOD      = 1000
 
-cfg.MODEL.ROI_HEADS.BATCH_SIZE_PER_IMAGE  = 128   # faster, and good enough for this toy dataset (default: 512)
+cfg.MODEL.ROI_HEADS.BATCH_SIZE_PER_IMAGE  = 64   # faster, and good enough for this toy dataset (default: 512)
 cfg.MODEL.ROI_HEADS.NUM_CLASSES           = len(data_rdd.RDD_DAMAGE_CATEGORIES)  # only has one class (ballon)
 cfg.SOLVER.CHECKPOINT_PERIOD              = 1000
 os.makedirs(cfg.OUTPUT_DIR, exist_ok=True)
-
-# Train
-trainer = RDDTrainer(cfg) 
-trainer.resume_or_load(resume=False)
-trainer.train()
-
-# Look at training curves in tensorboard:
-# %load_ext tensorboard
-# %tensorboard --logdir output/run_rdd/
-
-# ## Inference & evaluation using the trained model
-# Now, let's run inference with the trained model on the balloon validation dataset. First, let's create a predictor using the model we just trained:
-cfg.MODEL.WEIGHTS = os.path.join(cfg.OUTPUT_DIR, "model_final.pth")
-cfg.MODEL.ROI_HEADS.SCORE_THRESH_TEST = 0.7   # set a custom testing threshold for this model
-cfg.DATASETS.TEST = ("rdd2020_val",)
-predictor = DefaultPredictor(cfg)
+setup_logger(output=cfg.OUTPUT_DIR)
 
 
-# Then, we randomly select several samples to visualize the prediction results.
-from detectron2.utils.visualizer import ColorMode
-from detectron2.evaluation import COCOEvaluator, DatasetEvaluators, inference_on_dataset
-from detectron2.data import build_detection_test_loader
 
-evaluator = COCOEvaluator("rdd2020_val", cfg, False, "coco_eval")
-val_loader = build_detection_test_loader(cfg, "rdd2020_val")
-eval_results = inference_on_dataset(trainer.model, val_loader, DatasetEvaluators([evaluator]))
-# another equivalent way is to use trainer.test
-print(eval_results)
+# Variables for processing 
+rdd2020_metadata = MetadataCatalog.get("rdd2020_val")
+print("\nRDD2020 Metadata: ", rdd2020_metadata,"\n")
+JUST_EVALUATE = False     # False means Train
+
+
+# Decision to Train or just evaluate
+if not JUST_EVALUATE:
+    # Train
+    trainer = RDDTrainer(cfg) 
+    trainer.resume_or_load(resume=False)
+    trainer.train()
+
+    # Look at training curves in tensorboard:
+    # %load_ext tensorboard
+    # %tensorboard --logdir output/run_rdd/
+else:
+    # Inference & evaluation using the trained model
+    # Now, let's run inference with the trained model on the validation dataset. 
+    # First, let's create a predictor using the model we just trained:
+    cfg.MODEL.WEIGHTS = os.path.join(cfg.OUTPUT_DIR, "model_final.pth")
+    cfg.MODEL.ROI_HEADS.SCORE_THRESH_TEST = 0.7   # set a custom testing threshold for this model
+    cfg.DATASETS.TEST = ("rdd2020_val",)
+    predictor = DefaultPredictor(cfg)
+
+
+    # Then, we randomly select several samples to visualize the prediction results.
+    from detectron2.utils.visualizer import ColorMode
+    from detectron2.evaluation import COCOEvaluator, DatasetEvaluators, inference_on_dataset
+    from detectron2.data import build_detection_test_loader
+
+    evaluator = COCOEvaluator("rdd2020_val", cfg, False, "coco_eval")
+    val_loader = build_detection_test_loader(cfg, "rdd2020_val")
+    eval_results = inference_on_dataset(trainer.model, val_loader, DatasetEvaluators([evaluator]))
+    # another equivalent way is to use trainer.test
+    print(eval_results)
 
 # Empty the GPU Memory 
 torch.cuda.empty_cache()
-
