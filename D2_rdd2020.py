@@ -128,8 +128,13 @@ class RDDTrainer(DefaultTrainer):
 
 # Configuration
 cfg = get_cfg()
+# Faster RCNN
 cfg.merge_from_file(model_zoo.get_config_file("COCO-Detection/faster_rcnn_R_50_FPN_3x.yaml"))
 cfg.MODEL.WEIGHTS         = model_zoo.get_checkpoint_url("COCO-Detection/faster_rcnn_R_50_FPN_3x.yaml")  # Let training initialize from model zoo
+# RetinaNet
+#cfg.merge_from_file(model_zoo.get_config_file("COCO-Detection/retinanet_R_50_FPN_3x.yaml"))
+#cfg.MODEL.WEIGHTS         = model_zoo.get_checkpoint_url("COCO-Detection/retinanet_R_50_FPN_3x.yaml")
+
 cfg.DATASETS.TRAIN        = ("rdd2020_train",)
 cfg.DATASETS.TEST         = ("rdd2020_val", )
 cfg.OUTPUT_DIR            = "./output/run_exp1_b256/"
@@ -144,7 +149,8 @@ cfg.SOLVER.GAMMA          = 0.05
 cfg.TEST.EVAL_PERIOD      = 1000
 
 cfg.MODEL.ROI_HEADS.BATCH_SIZE_PER_IMAGE  = 256   # faster, and good enough for this toy dataset (default: 512)
-cfg.MODEL.ROI_HEADS.NUM_CLASSES           = len(data_rdd.RDD_DAMAGE_CATEGORIES)  # only has one class (ballon)
+cfg.MODEL.ROI_HEADS.NUM_CLASSES           = len(data_rdd.RDD_DAMAGE_CATEGORIES)  # only has few damage classes
+cfg.MODEL.RETINANET.NUM_CLASSES           = len(data_rdd.RDD_DAMAGE_CATEGORIES)
 cfg.SOLVER.CHECKPOINT_PERIOD              = 1000
 os.makedirs(cfg.OUTPUT_DIR, exist_ok=True)
 setup_logger(output=cfg.OUTPUT_DIR)

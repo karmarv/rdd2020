@@ -208,14 +208,14 @@ def process_segment_images(image_infile, image_outpath, save_out=False):
 
         if contours is not None:
             masked_image = binary_mask.reshape(im_input.shape[0], im_input.shape[1], 1) * im_input
-            if save_out:
-                cv2.imwrite(os.path.join(image_outpath, filename),  masked_image)
-            else:
-                cv2_imshow(masked_image)
             cv2.drawContours(masked_image, [contours], -1, (0, 255, 0), 3)
             (x,y,w,h) = bound_box
             cv2.rectangle(masked_image, (x, y), (x+w, y+h), (255, 0, 0), 2)
             check_annotations(image_infile, masked_image)
+            if save_out:
+                cv2.imwrite(os.path.join(image_outpath, filename),  masked_image)
+            else:
+                cv2_imshow(masked_image)
         else:
             if save_out:
                 cv2.imwrite(os.path.join(image_outpath, filename),  im_input)
@@ -244,7 +244,7 @@ if __name__ == "__main__":
                     start_time = time.time()
                     print("\n")
                     print("{}.)\tLoading Images: {}".format(id, imfile))
-                    predictions, vis_output = process_segment_images(imfile, image_outpath, save_out=True)
+                    predictions, vis_output = process_segment_images(imfile, image_outpath, save_out=False)
                     print("    \t{}: {} in {:.2f}s".format(imfile, "detected {} instances".format(len(predictions["sem_seg"])), time.time() - start_time))
                     #cv2_imshow(vis_output.get_image()[:, :, ::-1])
             else:
