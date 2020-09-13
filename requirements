@@ -38,3 +38,11 @@ streamlit
 git+https://github.com/cocodataset/panopticapi.git
 git+https://github.com/lvis-dataset/lvis-api.git
 git+https://github.com/mcordts/cityscapesScripts.git
+
+
+
+
+-f https://openmmlab.oss-accelerate.aliyuncs.com/mmcv/dist/index.html
+mmcv-full==latest+torch1.5.0+cu101 
+
+
