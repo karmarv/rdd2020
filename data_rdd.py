@@ -20,20 +20,20 @@ _PREDEFINED_SPLITS_GRC_MD["rdd2020_source"] = {
 }
 
 _PREDEFINED_SPLITS_GRC_MD["rdd2020"] ={
-    "rdd2020_val"  : ( 
+    "rdd2020_test"  : ( 
                        "lval/Czech", 
                        "lval/India", 
                        "lval/Japan"
                      ),
-    "rdd2020_test" : ( 
+    "rdd2020_val" : ( 
                        "ltest/Czech", 
                        "ltest/India", 
                        "ltest/Japan"
                      ),
     "rdd2020_train": ( 
-                       "ltrain/Czech", 
-                       "ltrain/India", 
-                       "ltrain/Japan"
+                       "lvaltrain/Czech", 
+                       "lvaltrain/India", 
+                       "lvaltrain/Japan"
                      )
 }
 

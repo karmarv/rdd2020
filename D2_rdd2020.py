@@ -137,18 +137,18 @@ cfg.MODEL.WEIGHTS         = model_zoo.get_checkpoint_url("COCO-Detection/faster_
 
 cfg.DATASETS.TRAIN        = ("rdd2020_train",)
 cfg.DATASETS.TEST         = ("rdd2020_val", )
-cfg.OUTPUT_DIR            = "./output/run_exp1_b256/"
+cfg.OUTPUT_DIR            = "./output/run_d2_frcnn-fpn-combovt_b640_e30k/"
 cfg.MODEL.DEVICE          = "cuda"
 cfg.DATALOADER.NUM_WORKERS= 8
 cfg.SOLVER.IMS_PER_BATCH  = 8
 cfg.SOLVER.BASE_LR        = 0.01        # Pick a good LR
 cfg.SOLVER.WARMUP_ITERS   = 1000 
-cfg.SOLVER.MAX_ITER       = 27000       # You may need to train longer for a practical dataset
-cfg.SOLVER.STEPS          = (23000, 26000)
+cfg.SOLVER.MAX_ITER       = 30000       # You may need to train longer for a practical dataset
+cfg.SOLVER.STEPS          = (26000, 28000, 29000)
 cfg.SOLVER.GAMMA          = 0.05
 cfg.TEST.EVAL_PERIOD      = 1000
 
-cfg.MODEL.ROI_HEADS.BATCH_SIZE_PER_IMAGE  = 256   # faster, and good enough for this toy dataset (default: 512)
+cfg.MODEL.ROI_HEADS.BATCH_SIZE_PER_IMAGE  = 640   # faster, and good enough for this toy dataset (default: 512)
 cfg.MODEL.ROI_HEADS.NUM_CLASSES           = len(data_rdd.RDD_DAMAGE_CATEGORIES)  # only has few damage classes
 cfg.MODEL.RETINANET.NUM_CLASSES           = len(data_rdd.RDD_DAMAGE_CATEGORIES)
 cfg.SOLVER.CHECKPOINT_PERIOD              = 1000

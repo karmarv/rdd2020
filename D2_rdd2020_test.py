@@ -31,21 +31,21 @@ import data_rdd
 cfg = get_cfg()
 cfg.merge_from_file(model_zoo.get_config_file("COCO-Detection/faster_rcnn_R_50_FPN_3x.yaml"))
 #cfg.merge_from_file(model_zoo.get_config_file("COCO-Detection/retinanet_R_50_FPN_3x.yaml"))
-cfg.OUTPUT_DIR            = "./output/run_exp1_b256/"
+#cfg.OUTPUT_DIR            = "../rdd2020_model_repository/det2-fasterrcnn-fpn/run_d2_frcnn-fpn-combott_b768/"
+cfg.OUTPUT_DIR            = "./output/run_d2_frcnn-fpn-combovt_b640_e30k/"
 cfg.MODEL.DEVICE          = "cuda"
-cfg.MODEL.ROI_HEADS.BATCH_SIZE_PER_IMAGE  = 256   # faster, and good enough for this toy dataset (default: 512)
 cfg.MODEL.ROI_HEADS.NUM_CLASSES           = len(data_rdd.RDD_DAMAGE_CATEGORIES)  # only has one class (ballon)
 cfg.MODEL.RETINANET.NUM_CLASSES           = len(data_rdd.RDD_DAMAGE_CATEGORIES)
 # ## Inference & evaluation using the trained model
 # Now, let's run inference with the trained model on the balloon validation dataset. First, let's create a predictor using the model we just trained:
 cfg.MODEL.WEIGHTS = os.path.join(cfg.OUTPUT_DIR, "model_final.pth")
 cfg.MODEL.ROI_HEADS.SCORE_THRESH_TEST = 0.7   # set a custom testing threshold for this model
-
+print("Evaluating Model:", cfg.MODEL.WEIGHTS)
 predictor = DefaultPredictor(cfg)
 
 # Generate RDD2020 Submission dataset
 splits_per_submission_dataset = ( "test1/India", "test1/Japan", "test1/Czech")
-#splits_per_submission_dataset = ( "test/India", "test/Japan", "test/Czech")
+#splits_per_submission_dataset = ( "test2/India", "test2/Japan", "test2/Czech")
 dataset_test_submission_dicts = data_rdd.load_images_ann_dicts(data_rdd.ROADDAMAGE_DATASET, splits_per_submission_dataset)
 
 
@@ -93,7 +93,7 @@ def format_submission_result(image_meta, predictions):
             out_str = "{0} {1} {2} {3} {4} ".format(map_classes_superids[int(clss)], int(x_min), int(y_min), int(x_max), int(y_max))
             score_dict[scr] = out_str
         result_item = ""
-        for key in sorted(score_dict.keys()):
+        for key in sorted(score_dict.keys(), reverse=True):
             result_item += score_dict[key]
         formatted_result.append(result_item)
     return formatted_result
