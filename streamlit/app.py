@@ -23,7 +23,7 @@ import numpy as np
 import os, urllib, cv2
 
 from model import model_bbox 
-from model import model_segm
+#from model import model_segm
 
 # Streamlit encourages well-structured code, like starting execution in a main() function.
 def main():

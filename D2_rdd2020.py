@@ -131,20 +131,23 @@ cfg = get_cfg()
 # Faster RCNN
 cfg.merge_from_file(model_zoo.get_config_file("COCO-Detection/faster_rcnn_R_50_FPN_3x.yaml"))
 cfg.MODEL.WEIGHTS         = model_zoo.get_checkpoint_url("COCO-Detection/faster_rcnn_R_50_FPN_3x.yaml")  # Let training initialize from model zoo
+
+#cfg.MODEL.WEIGHTS         = "./output/run_d2_frcnn-fpn-combovt_b640_v0_extd/model_final_10k.pth"
 # RetinaNet
 #cfg.merge_from_file(model_zoo.get_config_file("COCO-Detection/retinanet_R_50_FPN_3x.yaml"))
 #cfg.MODEL.WEIGHTS         = model_zoo.get_checkpoint_url("COCO-Detection/retinanet_R_50_FPN_3x.yaml")
 
 cfg.DATASETS.TRAIN        = ("rdd2020_train",)
 cfg.DATASETS.TEST         = ("rdd2020_val", )
-cfg.OUTPUT_DIR            = "./output/run_d2_frcnn-fpn-combovt_b640_e30k/"
+cfg.OUTPUT_DIR            = "./output/run_d2_frcnn-fpn-combovt_b640_v0/"
+#cfg.OUTPUT_DIR            = "./output/run_d2_frcnn-fpn-combovt_b640_v0_extd/"
 cfg.MODEL.DEVICE          = "cuda"
 cfg.DATALOADER.NUM_WORKERS= 8
 cfg.SOLVER.IMS_PER_BATCH  = 8
 cfg.SOLVER.BASE_LR        = 0.01        # Pick a good LR
 cfg.SOLVER.WARMUP_ITERS   = 1000 
 cfg.SOLVER.MAX_ITER       = 30000       # You may need to train longer for a practical dataset
-cfg.SOLVER.STEPS          = (26000, 28000, 29000)
+cfg.SOLVER.STEPS          = (23000, 25000, 26000)
 cfg.SOLVER.GAMMA          = 0.05
 cfg.TEST.EVAL_PERIOD      = 1000
 

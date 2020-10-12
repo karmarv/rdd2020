@@ -31,8 +31,10 @@ import data_rdd
 cfg = get_cfg()
 cfg.merge_from_file(model_zoo.get_config_file("COCO-Detection/faster_rcnn_R_50_FPN_3x.yaml"))
 #cfg.merge_from_file(model_zoo.get_config_file("COCO-Detection/retinanet_R_50_FPN_3x.yaml"))
-#cfg.OUTPUT_DIR            = "../rdd2020_model_repository/det2-fasterrcnn-fpn/run_d2_frcnn-fpn-combott_b768/"
-cfg.OUTPUT_DIR            = "./output/run_d2_frcnn-fpn-combovt_b640_e30k/"
+#cfg.OUTPUT_DIR            = "../rdd2020_model_repository/det2-fasterrcnn-fpn/run_d2_frcnn-fpn-combovt_b640_v3/"
+#cfg.OUTPUT_DIR            = "./output/run_d2_frcnn-fpn-combovt_b640_v0/"
+cfg.OUTPUT_DIR            = "./output/run_d2_frcnn-fpn-combovt_b640_v0_extd/"
+
 cfg.MODEL.DEVICE          = "cuda"
 cfg.MODEL.ROI_HEADS.NUM_CLASSES           = len(data_rdd.RDD_DAMAGE_CATEGORIES)  # only has one class (ballon)
 cfg.MODEL.RETINANET.NUM_CLASSES           = len(data_rdd.RDD_DAMAGE_CATEGORIES)
@@ -110,7 +112,7 @@ def generate_results():
     return results
 
 def write_results_to_file():
-    with open(os.path.join(cfg.OUTPUT_DIR, 'hal_submission_rdd2020_exp.txt'), 'w') as f:
+    with open(os.path.join(cfg.OUTPUT_DIR, 'hal_submission_rdd2020_t1exp_exttt10k.txt'), 'w') as f:
       f.writelines("%s\n" % line for line in results)
 
 
