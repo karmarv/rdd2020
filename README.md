@@ -58,7 +58,8 @@ Road Damage Detection Challenge (IEEE Big Data Cup 2020)
 - [x] 3. Train by running command 'python D2_rdd2020.py'
     - upon completing the max iterations a 'model_final.pth' will be dumped in respective output folder.
 
-- [x] 4. Test the dumped model_final.pth weights by using [D2_rdd2020_test.py]
+- [x] 4. **Test the dumped model_final.pth weights by using [D2_rdd2020_test.py]**
+    - **Pre-trained model weights** download at [https://github.com/vishwakarmarhl/rdd2020/releases/tag/b0.1](https://github.com/vishwakarmarhl/rdd2020/releases/tag/b0.1)
     - Configure the line:32 for the model configuration based on the training strategy used in Step 2
     - Comment or uncomment line:49 (test1) or line:50 (test2) based on the test dataset you want to generate the submission file for.
     - run the test command 'python D2_rdd2020_test.py' to find a txt dump file that evaluates the test images using the trained model
