@@ -1,13 +1,14 @@
 -f https://download.pytorch.org/whl/torch_stable.html
-torch==1.6.0+cu101
-torchvision==0.7.0+cu101
+
+torch==1.7.1+cu110 
+torchvision==0.8.2+cu110
 torchtext
 torchserve 
 torch-model-archiver
 tensorboard
 
--f https://dl.fbaipublicfiles.com/detectron2/wheels/cu101/torch1.6/index.html
-detectron2==0.2 
+-f https://dl.fbaipublicfiles.com/detectron2/wheels/cu110/torch1.7/index.html
+detectron2==0.4
 
 numpy==1.19.0
 requests~=2.21.0
@@ -34,15 +35,3 @@ jupyterlab
 flask 
 jsonify
 streamlit 
-
-git+https://github.com/cocodataset/panopticapi.git
-git+https://github.com/lvis-dataset/lvis-api.git
-git+https://github.com/mcordts/cityscapesScripts.git
-
-
-
-
--f https://openmmlab.oss-accelerate.aliyuncs.com/mmcv/dist/index.html
-mmcv-full==latest+torch1.5.0+cu101 
-
-

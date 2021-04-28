@@ -20,7 +20,7 @@ from detectron2.utils.logger import setup_logger
 
 # import some common libraries
 import numpy as np
-import os, json, cv2, random
+import os, json, cv2, random, time
 import matplotlib.pyplot as plt
 from copy import deepcopy
 
@@ -45,9 +45,18 @@ from detectron2.data.build import (
 
 import data_rdd
 
-def cv2_imshow(im):
-    plt.figure(figsize=(8,8))
-    plt.imshow(cv2.cvtColor(im, cv2.COLOR_BGR2RGB))
+#def cv2_imshow(im):
+#    plt.figure(figsize=(8,8))
+#    plt.imshow(cv2.cvtColor(im, cv2.COLOR_BGR2RGB))
+
+def cv2_imshow(im, time_out=30000):
+    WINDOW_NAME = "RDD"
+    cv2.namedWindow(WINDOW_NAME, cv2.WINDOW_NORMAL)
+    cv2.resizeWindow(WINDOW_NAME, 1280, 1024)
+    cv2.imshow(WINDOW_NAME, im)
+    if cv2.waitKey(time_out) == 27:
+        cv2.destroyAllWindows() # esc to quit
+        print("Closing the view")
 
 # Setup COCO style dataset
 DatasetCatalog.clear()
@@ -139,8 +148,8 @@ cfg.MODEL.WEIGHTS         = model_zoo.get_checkpoint_url("COCO-Detection/faster_
 
 cfg.DATASETS.TRAIN        = ("rdd2020_train",)
 cfg.DATASETS.TEST         = ("rdd2020_val", )
-cfg.OUTPUT_DIR            = "./output/run_d2_frcnn-fpn-combovt_b640_v0/"
-#cfg.OUTPUT_DIR            = "./output/run_d2_frcnn-fpn-combovt_b640_v0_extd/"
+#cfg.OUTPUT_DIR            = "./output/run_d2_frcnn-fpn-combovt_b640_v0/"
+cfg.OUTPUT_DIR            = "../rdd2020_model_repository/det2-fasterrcnn-fpn/run_d2_frcnn-fpn-combovt_b640_v0/"
 cfg.MODEL.DEVICE          = "cuda"
 cfg.DATALOADER.NUM_WORKERS= 8
 cfg.SOLVER.IMS_PER_BATCH  = 8
@@ -165,19 +174,33 @@ rdd2020_metadata = MetadataCatalog.get("rdd2020_val")
 print("\nRDD2020 Metadata: ", rdd2020_metadata,"\n")
 trainer = RDDTrainer(cfg)
 
-#JUST_EVALUATE = False     # False means Train
-JUST_EVALUATE = False
+def visualize_results(visualize_flag=True):
+    cfg.MODEL.WEIGHTS = os.path.join(cfg.OUTPUT_DIR, "model_final.pth")
+    cfg.MODEL.ROI_HEADS.SCORE_THRESH_TEST = 0.7   # set a custom testing threshold for this model
+    cfg.DATASETS.TEST = ("rdd2020_val",)
+    #splits_per_submission_dataset = ( "test1/India", "test1/Japan", "test1/Czech")
+    #splits_per_submission_dataset = ( "test2/India", "test2/Japan", "test2/Czech")
+    splits_per_submission_dataset = ( "ltest/India", "ltest/Japan", "ltest/Czech")
+    dataset_test_submission_dicts = data_rdd.load_images_ann_dicts(data_rdd.ROADDAMAGE_DATASET, splits_per_submission_dataset)
+    predictor = DefaultPredictor(cfg)
+    #rdd2020_metadata = MetadataCatalog.get("rdd2020_val")
+    for idx, d in enumerate(dataset_test_submission_dicts):
+        print("Visualize this result: ", d["file_name"])
+        im = cv2.imread(d["file_name"])
+        start = time.time()
+        outputs = predictor(im)
+        end = time.time()
+        print(idx, ".) ", outputs["instances"].pred_classes)
+        print("     ", outputs["instances"].scores, ", Time(sec): ", (end - start))
+        v = Visualizer(im[:, :, ::-1],
+                    metadata=rdd2020_metadata, 
+                    scale=0.5
+        )
+        out = v.draw_instance_predictions(outputs["instances"].to("cpu"))
+        cv2_imshow(out.get_image()[:, :, ::-1])
+    return        
 
-# Decision to Train or just evaluate
-if not JUST_EVALUATE:
-    # Train
-    trainer.resume_or_load(resume=False)
-    trainer.train()
-
-    # Look at training curves in tensorboard:
-    # %load_ext tensorboard
-    # %tensorboard --logdir output/run_rdd/
-else:
+def evaluate_results():
     # Inference & evaluation using the trained model
     # Now, let's run inference with the trained model on the validation dataset. 
     # First, let's create a predictor using the model we just trained:
@@ -185,7 +208,7 @@ else:
     cfg.MODEL.ROI_HEADS.SCORE_THRESH_TEST = 0.7   # set a custom testing threshold for this model
     cfg.DATASETS.TEST = ("rdd2020_val",)
     predictor = DefaultPredictor(cfg)
-    trainer.resume_or_load(resume=True)
+    trainer.resume_or_load(resume=False)
 
     # Then, we randomly select several samples to visualize the prediction results.
     from detectron2.utils.visualizer import ColorMode
@@ -197,6 +220,22 @@ else:
     eval_results = inference_on_dataset(trainer.model, val_loader, DatasetEvaluators([evaluator]))
     # another equivalent way is to use trainer.test
     print(eval_results)
+
+#JUST_EVALUATE = False     # False means Train
+JUST_EVALUATE = True
+
+# Decision to Train or just evaluate
+if not JUST_EVALUATE:
+    # Train
+    trainer.resume_or_load(resume=False)
+    trainer.train()
+
+    # Look at training curves in tensorboard:
+    # %load_ext tensorboard
+    # %tensorboard --logdir output/run_rdd/
+else:
+    #evaluate_results()
+    visualize_results()
 
 # Empty the GPU Memory 
 torch.cuda.empty_cache()

@@ -102,7 +102,7 @@ metadata = MetadataCatalog.get(cfg.DATASETS.TEST[0] if len(cfg.DATASETS.TEST) el
 cpu_device = torch.device("cpu")
 predictor = DefaultPredictor(cfg)
 
-def cv2_imshow(im, time_out=10000):
+def cv2_imshow(im, time_out=50000):
     cv2.namedWindow(WINDOW_NAME, cv2.WINDOW_NORMAL)
     cv2.resizeWindow(WINDOW_NAME, 1280, 1024)
     cv2.imshow(WINDOW_NAME, im)
@@ -201,7 +201,7 @@ def check_annotations(image_infile, ann_image):
 """ Process image and preserve only the label==road segment in image """
 def process_segment_images(image_infile, image_outpath, save_out=False):
     filename = os.path.basename(image_infile)
-    predictions, im_input, vis_output = predict_visualize(imfile)
+    predictions, im_input, vis_output = predict_visualize(image_infile)
     if isinstance(predictions["sem_seg"], torch.Tensor):
         binary_mask, contours, bound_box = process_pred_masks(predictions)
         #output_vis_image = vis_output.get_image()[:, :, ::-1]
@@ -231,26 +231,27 @@ def process_segment_images(image_infile, image_outpath, save_out=False):
 """
 if __name__ == "__main__":
     print("Metadata List: ", MetadataCatalog.list())
-    input_folders = _PREDEFINED_SPLITS_GRC_MD["rdd2020_source"]["rdd2020_train"]
+    #input_folders = _PREDEFINED_SPLITS_GRC_MD["rdd2020_source"]["rdd2020_train"]
+    input_folders = ["train_short/Japan"]
     try:
         for folder in input_folders:
             print("\n----------- ", folder, "------------\n")
-            #image_filepath = os.path.join(ROADDAMAGE_DATASET, "train/Japan/images", "Japan_000000.jpg")    # single image
-            image_filepath = os.path.join(ROADDAMAGE_DATASET, folder, "images")          # in  directory
+            image_filepath = os.path.join(ROADDAMAGE_DATASET, "train/Japan/images", "Japan_000000.jpg")    # single image
+            #image_filepath = os.path.join(ROADDAMAGE_DATASET, folder, "images")          # in  directory
             image_outpath  = os.path.join(image_filepath, "../images_segm")              # out directory
-            os.makedirs(image_outpath, exist_ok=True)
+            #os.makedirs(image_outpath, exist_ok=True)
             if os.path.isdir(image_filepath):
                 for id, imfile in enumerate(sorted(glob.glob(os.path.join(image_filepath, '*.jpg')))): # assuming jpg images
                     start_time = time.time()
                     print("\n")
                     print("{}.)\tLoading Images: {}".format(id, imfile))
-                    predictions, vis_output = process_segment_images(imfile, image_outpath, save_out=False)
+                    predictions, im_input, vis_output = process_segment_images(imfile, image_outpath, save_out=False)
                     print("    \t{}: {} in {:.2f}s".format(imfile, "detected {} instances".format(len(predictions["sem_seg"])), time.time() - start_time))
                     #cv2_imshow(vis_output.get_image()[:, :, ::-1])
             else:
                 start_time = time.time()
-                predictions, vis_output = predict_visualize(image_filepath)
-                print("{}.)\t{}: {} in {:.2f}s".format(id, imfile, "detected {} instances".format(len(predictions["sem_seg"])), time.time() - start_time))
+                predictions, im_input, vis_output = process_segment_images(image_filepath, image_outpath, save_out=False)
+                print("{}.)\t{}: {} in {:.2f}s".format(id, image_filepath, "detected {} instances".format(len(predictions["sem_seg"])), time.time() - start_time))
                 cv2_imshow(vis_output.get_image()[:, :, ::-1])
     except Exception as e:
         raise Exception('Error loading data from %s: %s\n' % (input_folders, e))

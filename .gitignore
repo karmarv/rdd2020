@@ -130,7 +130,8 @@ dmypy.json
 
 
 *.pth
-/coco_eval/**
-/output/**
+coco_eval
+output
+data
 
 **/=2.0.1
